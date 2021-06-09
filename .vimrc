@@ -24,20 +24,21 @@ endfunction
 "         order-dependent          
 """""""""""""""""""""""""""""""""""
 
-" prevent 'defaults.vim' from being sourced.
+" source 'debian.vim' through a call to 'runtime' to ensure all system-wide
+" defaults are set for debian or debian-based distros (such as ubuntu).
+"runtime! debian.vim
+
+" prevent 'defaults.vim' from being sourced
 :let g:skip_defaults_vim=1
 
-" Use 'set nocompatible', only if not already done so (prevents any unintended
-" "side effects", which can crop up if 'nocp' has already been set). 
-if &compatible
-    :set nocompatible
-endif
+" set the 'nocompatible' option; vi compatibility is not a concern.
+:set nocompatible
 
 """""""""""""""""""""""""""""""""""
 "     complex/situational           
 """""""""""""""""""""""""""""""""""
 
-" write the file changes after editing without sudo
+" write file changes after editing without sudo using 'W'
 :command W silent execute 'write !sudo /usr/bin/tee ' 
             \   . shellescape(@%, 1) . ' > /dev/null' <bar> edit!
 
@@ -61,14 +62,36 @@ autocmd BufReadPost *
 " update statusbar every number of seconds specified - '4000': 4 seconds.
 let timer=timer_start(4000,'UpdateStatusbar',{'repeat':-1})
 
-" load indentation rules and plugins according to the detected filetype.
-if has("autocmd")
-    filetype plugin indent on
+" if file '/etc/papersize' is available, set the papersize according to it.
+if filereadable("/etc/papersize")
+  let s:papersize=matchstr(readfile('/etc/papersize','',1),'\p*')
+  if strlen(s:papersize)
+    execute ":set printoptions+=paper:" . s:papersize
+  endif
 endif
+
+"""""""""""""""""""""""""""""""""""
+"     swap, backup, undo          
+"""""""""""""""""""""""""""""""""""
+
+" set swap directory and use of swap files
+:set directory=~/.vim/.swp
+:set swapfile
+
+" set backup directory and use of backup files
+:set backupdir=~/.vim/.backup
+:set backup
+
+" set undo directory and use of undo files
+:set undodir=~/.vim/.undo
+:set undofile
 
 """""""""""""""""""""""""""""""""""
 "             common                             
 """""""""""""""""""""""""""""""""""
+
+" load indentation rules and plugins according to the detected filetype.
+:filetype plugin indent on
 
 " allow '<BS>' over indent/autoindent, line breaks, and 'insert' mode start.
 :set backspace=indent,eol,start
@@ -82,7 +105,7 @@ endif
 " use indent of previous line for newly created line. 
 :set autoindent
 
-" specify when to display statusline  '2': always.
+" specify when to display statusline - '2': always.
 :set laststatus=2
 
 " display current cursor position (lower-right). 
@@ -91,38 +114,44 @@ endif
 " enable mouse usage for specified mode(s) - 'a': all modes.
 :set mouse=a
 
-" use spaces instead of tab
+" use spaces instead of <tab> character.
 :set expandtab
 
-" set one tab equal to number of spaces specified - '2'.
+" set one <tab> character equal to the number of spaces specified - '2'.
 :set tabstop=2
 
-"
+" mix of <tab> and spaces; specify number of spaces <tab> counts for when 
+" performing editing operations (i.e., inserting <tab> or using <bs>) - '2'.
 :set softtabstop=2
 
-"
+" each step of indent/autoindent is equal to number of spaces specified - '2'.
 :set shiftwidth=2
 
-" display line numbers in the left margin
+" if 'on', a <tab> at the start of a line is based on the 'shiftwidth' value;
+" if 'off', a <tab> is always based on 'tabstop' or 'softtabstop' value, and
+" 'shiftwidth' is then only used to shift text left/right.
+:set smarttab
+
+" display line numbers in the left margin.
 :set number
 
-" specify width of additional margin to add left of line numbers - '2'.
+" specify width of additional margin to add left of the line numbers - '2'.
 :set foldcolumn=2
 
-" wrap lines at the width of the window.
+" if window width is less than textwidth (below) then wrap at window width.
 :set wrap
 
-" do not split words when wrapping text (wraps full word).
+" do not split words when wrapping text (wrap full words).
 :set linebreak
 
-" wrap text using specified formatting option - 't': textwidth. 
+" wrap text using specified formatting option - 't': textwidth.
 :set formatoptions=t
 
-" break/wrap each line at number of characters specified - '80'.
+" break/wrap each line at number of characters specified - '79'.
 :set textwidth=79
 
 " highlight current line in all windows and update as cursor moves.
-":set cursorline
+:set cursorline
 
 " highlight current column in all windows and update as cursor moves.
 ":set cursorcolumn
@@ -150,9 +179,6 @@ endif
 
 " record specified number of commands and search patterns - '200'.
 :set history=200
-
-" keep a backup of a file when overwriting it. 
-:set backup
 
 " automatically save before commands like ':next' and ':make'.
 :set autowrite
@@ -216,15 +242,4 @@ endif
 " configure individual instructions for syntax hightlighting:
 ":highlight Normal ctermfg=Blue
 ":highlight Comment ctermfg=Green
-
-"""""""""""""""""""""""""""""""""""
-"     source other files next         
-"""""""""""""""""""""""""""""""""""
-
-" Source a global configuration file at '/etc/vim/vimrc(.local)', if
-"if filereadable("/etc/vim/vimrc.local")
-"  source /etc/vim/vimrc.local
-"endif
-
-
 
