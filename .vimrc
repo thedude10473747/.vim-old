@@ -3,13 +3,13 @@
 
 
 """""""""""""""""""""""""""""""""""
-"        helper functions         
+"        helper functions         "
 """""""""""""""""""""""""""""""""""
 
 " return message if 'paste' mode currently enabled - display on statusbar.
 function! HasPaste()
     if &paste
-        return 'PASTE MODE '
+        return 'paste mode '
     else
         return ''
     endif
@@ -20,11 +20,79 @@ function! UpdateStatusbar(timer)
     :execute 'let &ro=&ro'
 endfunction 
 
+" create function to call when '<del>' key is pressed in 'normal' mode.
+function! Delete_key(...)
+  let line=getline('.')
+  if line=~'^\s*$'
+    execute "normal dd"
+    return
+  endif
+  let column=col('.')
+  let line_len=strlen(line)
+  let first_or_end=0
+  if column==1
+    let first_or_end=1
+  else
+    if column==line_len
+      first_or_end=1
+    endif
+  endif
+  execute "normal i\<del>\<esc>"
+  if first_or_end==0
+    execute "normal l"
+  endif
+endfunction
+       
+" create function to call when '<bs>' key is pressed in 'normal' mode.
+function! Backspace_key(...)
+  let column=col('.')
+  execute "normal i\<bs>\<esc>"
+    if column==1
+      let column2=col('.')
+      if column2>1
+        execute "normal l"
+      endif
+    else
+      if column>2
+        execute "normal l"
+      endif
+    endif
+endfunction
+     
+" create function to call when '<tab>' key is pressed in 'normal' mode.
+function! Tab_key(...)
+  let start_pos=col('.')
+  execute "normal i\<tab>"
+  let end_pos=col('.')
+  let diff=end_pos-start_pos
+  let counter=0
+  while 1==1
+    execute "normal l"
+    "let counter=counter+1
+    let counter+=1
+    if counter>=diff
+      break
+    endif
+  endwhile
+  execute "normal \<esc>"
+endfunction
+   
+" create function to call when '<cr>' key is pressed in 'normal' mode
+function! Return_key(...)
+  let buftype=getbufvar(bufnr(''),'&buftype')
+  if buftype!=''
+    unmap <cr>
+    execute "normal \<cr>"
+    nnoremap <silent> <cr> :call Return_key()<cr>
+  else
+    execute "normal i\<cr>\<esc>"
+  endif
+endfunction
+
 """""""""""""""""""""""""""""""""""
-"         order-dependent          
+"         order-dependent         " 
 """""""""""""""""""""""""""""""""""
 
-" source 'debian.vim' through a call to 'runtime' to ensure all system-wide
 " defaults are set for debian or debian-based distros (such as ubuntu).
 "runtime! debian.vim
 
@@ -35,7 +103,7 @@ endfunction
 :set nocompatible
 
 """""""""""""""""""""""""""""""""""
-"     complex/situational           
+"       complex/situational       "  
 """""""""""""""""""""""""""""""""""
 
 " write file changes after editing without sudo using 'W'
@@ -71,7 +139,7 @@ if filereadable("/etc/papersize")
 endif
 
 """""""""""""""""""""""""""""""""""
-"     swap, backup, undo          
+"       swap, backup, undo        "
 """""""""""""""""""""""""""""""""""
 
 " set swap directory and use of swap files
@@ -87,13 +155,33 @@ endif
 :set undofile
 
 """""""""""""""""""""""""""""""""""
-"             common                             
+"          key mappings           " 
+"""""""""""""""""""""""""""""""""""
+
+" map '<del>' key to call function 'Delete_key()'
+nnoremap <silent> <del> :call Delete_key()<cr>
+
+" map '<bs>' key to call function 'Backspace_key()'
+nnoremap <silent> <bs> :call Backspace_key()<cr>
+
+" map '<tab>' key to call function 'Tab_key()'
+nnoremap <silent> <tab> :call Tab_key()<cr>
+
+" map '<cr>' to call function 'Return_key()'
+nnoremap <silent> <cr> :call Return_key()<cr>
+
+" map '<space>' key to to 'i\<space>\<esc>l' which will change to 'insert'
+" mode, enter '<space>' key, enter '<esc>' key to change to 'normal' mode
+nnoremap <silent> <space> i<space><esc>l
+      
+"""""""""""""""""""""""""""""""""""
+"             common              "               
 """""""""""""""""""""""""""""""""""
 
 " load indentation rules and plugins according to the detected filetype.
 :filetype plugin indent on
 
-" allow '<BS>' over indent/autoindent, line breaks, and 'insert' mode start.
+" allow '<bs>' over indent/autoindent, line breaks, and 'insert' mode start.
 :set backspace=indent,eol,start
 
 " turn on syntax highlighting
@@ -150,6 +238,9 @@ endif
 " break/wrap each line at number of characters specified - '79'.
 :set textwidth=79
 
+" highlight column at which point text is set to wrap for a visual border.
+:set colorcolumn=80
+
 " highlight current line in all windows and update as cursor moves.
 :set cursorline
 
@@ -183,7 +274,7 @@ endif
 " automatically save before commands like ':next' and ':make'.
 :set autowrite
 
-" use '<Left>' or '<Right>' to navigate through completion lists. 
+" use '<left>' key or '<right>' key to navigate through completion lists. 
 :set wildmenu
 
 " specify minimum screen lines to keep above/below cursor - '10'.
@@ -192,16 +283,17 @@ endif
 " stop certain movements from always going to the first character of a line.
 :set nostartofline
 
-" toggle between 'paste' and 'nopaste' using the key specified - '<F11>'
-:set pastetoggle=<F11>
+" toggle between 'paste' and 'nopaste' using the key specified - '<f11>'; note
+" that '<ctrl>+<f11>' is required to actualy to turn 'paste' mode on/off.
+:set pastetoggle=<f11>
 
 """""""""""""""""""""""""""""""""""
-"          colorschemes                
+"          colorschemes           "     
 """""""""""""""""""""""""""""""""""
 
 " all of the available default colorschemes, together with the command needed
 " to set the default to that scheme:
-" NOTE: slightly narrowed down list is beneath all the default choices. 
+" note: slightly narrowed down list is beneath all the default choices. 
 "   command    scheme
 ":colorscheme blue
 ":colorscheme darkblue
@@ -233,7 +325,7 @@ endif
 "          pablo     cool colors; dark writing, dark background, bad contrast.
 "            ron*    good contrast; cool colors.
 "          shine     very bright background; some good contrast.
-"     NOTE: * best default dark-themed colorschemes.
+"     note: * best default dark-themed colorschemes.
 
 " remove the current individual syntax highlighting for a group:
 ":highlight Normal ctermfg=None
